@@ -1,0 +1,2468 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>從企業問題到 AI 系統：生成式 AI 系統設計與落地實戰</title>
+<style>
+:root {
+  --bg: #f5f7fb;
+  --bg2: #ffffff;
+  --bg3: #eef1f7;
+  --bg4: #e4e8f2;
+  --border: rgba(0,0,0,0.08);
+  --border2: rgba(0,0,0,0.14);
+  --text: #1a1e2e;
+  --text2: #4a5068;
+  --text3: #8890aa;
+  --accent: #2563eb;
+  --accent2: #1d4ed8;
+  --gold: #b45309;
+  --teal: #0f766e;
+  --coral: #dc2626;
+  --purple: #7c3aed;
+  --green: #16a34a;
+  --nav-w: 260px;
+  --right-w: 320px;
+  --font: 'Noto Sans TC', 'PingFang TC', sans-serif;
+  --mono: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 15px;
+  line-height: 1.75;
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ── LEFT NAV ── */
+#nav {
+  width: var(--nav-w);
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  overflow-y: auto;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+}
+
+#nav-header {
+  padding: 20px 16px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+#nav-header h1 {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+#nav-header p {
+  font-size: 11px;
+  color: var(--text3);
+}
+
+.nav-section {
+  padding: 12px 0 4px;
+}
+
+.nav-section-title {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text3);
+  padding: 0 16px 6px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 16px;
+  font-size: 13px;
+  color: var(--text2);
+  cursor: pointer;
+  border-left: 2px solid transparent;
+  transition: all 0.15s;
+  text-decoration: none;
+}
+
+.nav-item:hover {
+  background: var(--bg3);
+  color: var(--text);
+}
+
+.nav-item.active {
+  background: rgba(91,141,239,0.1);
+  color: var(--accent);
+  border-left-color: var(--accent);
+}
+
+.nav-badge {
+  margin-left: auto;
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 10px;
+  background: var(--bg4);
+  color: var(--text3);
+}
+
+.nav-badge.hot { background: rgba(240,96,96,0.15); color: var(--coral); }
+
+.progress-bar {
+  margin: auto 16px 16px;
+  background: var(--bg4);
+  border-radius: 4px;
+  height: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--teal));
+  border-radius: 4px;
+  transition: width 0.4s ease;
+}
+
+.progress-label {
+  font-size: 11px;
+  color: var(--text3);
+  margin: 0 16px 4px;
+}
+
+/* ── MAIN ── */
+#main {
+  margin-left: var(--nav-w);
+  margin-right: var(--right-w);
+  flex: 1;
+  min-height: 100vh;
+}
+
+/* ── RIGHT PANEL ── */
+#panel {
+  width: var(--right-w);
+  background: var(--bg2);
+  border-left: 1px solid var(--border);
+  position: fixed;
+  top: 0; right: 0; bottom: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+#panel-header {
+  padding: 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#panel-header h3 {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.panel-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--teal);
+  animation: blink 2s infinite;
+}
+
+@keyframes blink {
+  0%,100%{opacity:1} 50%{opacity:0.3}
+}
+
+.prompt-section {
+  padding: 16px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.prompt-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text3);
+}
+
+.prompt-box {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 12px;
+  color: var(--text2);
+  font-family: var(--mono);
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.prompt-input {
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 13px;
+  color: var(--text);
+  font-family: var(--font);
+  resize: vertical;
+  min-height: 80px;
+  width: 100%;
+  transition: border-color 0.2s;
+}
+
+.prompt-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.btn {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 9px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: var(--font);
+}
+
+.btn:hover { background: var(--accent2); transform: translateY(-1px); }
+.btn:active { transform: translateY(0); }
+
+.btn-ghost {
+  background: transparent;
+  border: 1px solid var(--border2);
+  color: var(--text2);
+}
+
+.btn-ghost:hover { background: var(--bg3); color: var(--text); }
+
+.output-box {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 12px;
+  color: var(--text);
+  line-height: 1.7;
+  min-height: 60px;
+  font-family: var(--font);
+  display: none;
+}
+
+.output-box.visible { display: block; }
+
+.typing-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 14px;
+  background: var(--accent);
+  margin-left: 2px;
+  animation: cursor-blink 0.8s infinite;
+  vertical-align: text-bottom;
+}
+
+@keyframes cursor-blink {
+  0%,100%{opacity:1} 50%{opacity:0}
+}
+
+/* ── SECTIONS ── */
+.section {
+  display: none;
+  padding: 40px 48px;
+  animation: fadeIn 0.3s ease;
+}
+
+.section.active { display: block; }
+
+@keyframes fadeIn {
+  from { opacity:0; transform: translateY(8px); }
+  to { opacity:1; transform: translateY(0); }
+}
+
+.section-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 20px;
+  margin-bottom: 16px;
+}
+
+.badge-case { background: #dbeafe; color: var(--accent); }
+.badge-main { background: #fee2e2; color: var(--coral); }
+.badge-tech { background: #ccfbf1; color: var(--teal); }
+.badge-sw { background: #ede9fe; color: var(--purple); }
+
+h2.section-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 8px;
+  line-height: 1.3;
+}
+
+.section-desc {
+  color: var(--text2);
+  font-size: 15px;
+  margin-bottom: 32px;
+  max-width: 640px;
+}
+
+/* ── CARDS ── */
+.card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin-bottom: 20px;
+}
+
+.card-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.card-icon {
+  width: 28px; height: 28px;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.icon-blue { background: rgba(91,141,239,0.15); }
+.icon-gold { background: rgba(232,169,64,0.15); }
+.icon-teal { background: rgba(59,201,160,0.15); }
+.icon-coral { background: rgba(240,96,96,0.15); }
+
+p.card-body {
+  color: var(--text2);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+/* ── TABLE ── */
+table.edu-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin: 16px 0;
+}
+
+table.edu-table th {
+  background: var(--bg3);
+  color: var(--accent);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 10px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+table.edu-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text2);
+  vertical-align: top;
+}
+
+table.edu-table tr:last-child td { border-bottom: none; }
+table.edu-table tr:hover td { background: var(--bg3); }
+
+.tag {
+  display: inline-block;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 600;
+  margin: 2px;
+}
+
+.tag-llm { background: #dbeafe; color: #1d4ed8; }
+.tag-rag { background: #ccfbf1; color: #0f766e; }
+.tag-rule { background: #ede9fe; color: #6d28d9; }
+.tag-api { background: #fef3c7; color: #92400e; }
+.tag-no { background: #fee2e2; color: #b91c1c; }
+
+/* ── TASK BLOCK ── */
+.task-block {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin: 24px 0;
+}
+
+.task-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.task-icon {
+  font-size: 18px;
+}
+
+.task-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+/* ── QUIZ ── */
+.quiz-options {
+  display: grid;
+  gap: 8px;
+  margin: 14px 0;
+}
+
+.quiz-opt {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text2);
+  transition: all 0.15s;
+  text-align: left;
+  width: 100%;
+  font-family: var(--font);
+}
+
+.quiz-opt:hover { border-color: var(--border2); color: var(--text); }
+.quiz-opt.correct { border-color: var(--teal); background: rgba(59,201,160,0.08); color: var(--teal); }
+.quiz-opt.wrong { border-color: var(--coral); background: rgba(240,96,96,0.08); color: var(--coral); }
+
+.quiz-feedback {
+  display: none;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.6;
+  margin-top: 10px;
+}
+
+.quiz-feedback.show { display: block; }
+.quiz-feedback.ok { background: rgba(59,201,160,0.08); border: 1px solid rgba(59,201,160,0.2); color: var(--teal); }
+.quiz-feedback.bad { background: rgba(240,96,96,0.08); border: 1px solid rgba(240,96,96,0.2); color: var(--coral); }
+
+/* ── FLOW STEPS ── */
+.flow-steps {
+  display: flex;
+  gap: 0;
+  margin: 20px 0;
+  overflow: hidden;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+}
+
+.flow-step {
+  flex: 1;
+  padding: 16px 14px;
+  background: var(--bg3);
+  border-right: 1px solid var(--border);
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.flow-step:last-child { border-right: none; }
+
+.flow-step.active {
+  background: rgba(91,141,239,0.1);
+}
+
+.flow-step:hover { background: var(--bg4); }
+
+.flow-step-num {
+  font-size: 11px;
+  color: var(--text3);
+  margin-bottom: 4px;
+}
+
+.flow-step-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text2);
+}
+
+.flow-step.active .flow-step-label { color: var(--accent); }
+
+.flow-step-arrow {
+  position: absolute;
+  right: -10px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1;
+  font-size: 14px;
+  color: var(--text3);
+}
+
+.flow-content {
+  display: none;
+}
+
+.flow-content.active { display: block; }
+
+/* ── ARCH LAYERS ── */
+.arch-layer {
+  border-radius: 10px;
+  padding: 14px 20px;
+  margin-bottom: 10px;
+  border: 1px solid var(--border);
+}
+
+.arch-layer-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 6px;
+}
+
+.arch-layer-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.arch-chip {
+  background: var(--bg4);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 12px;
+  font-size: 12px;
+  color: var(--text2);
+}
+
+/* ── SPEC VIEW ── */
+.spec-section {
+  border-left: 2px solid var(--accent);
+  padding: 12px 16px;
+  margin: 12px 0;
+  background: var(--bg3);
+  border-radius: 0 8px 8px 0;
+}
+
+.spec-section-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.spec-content {
+  font-size: 13px;
+  color: var(--text2);
+  line-height: 1.65;
+}
+
+/* ── GHERKIN ── */
+.gherkin {
+  background: #0a1020;
+  border: 1px solid rgba(91,141,239,0.2);
+  border-radius: 8px;
+  padding: 16px 20px;
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+.g-keyword { color: #c792ea; font-weight: 600; }
+.g-text { color: #89ddff; }
+.g-scenario { color: var(--gold); font-weight: 600; }
+
+/* ── HIGHLIGHT BOX ── */
+.highlight {
+  display: flex;
+  gap: 12px;
+  padding: 14px 18px;
+  border-radius: 10px;
+  margin: 16px 0;
+  font-size: 14px;
+}
+
+.highlight.good { background: #f0fdf4; border: 1px solid #86efac; color: #15803d; }
+.highlight.bad { background: #fef2f2; border: 1px solid #fca5a5; color: #b91c1c; }
+.highlight.info { background: #eff6ff; border: 1px solid #93c5fd; color: #1d4ed8; }
+.highlight.warn { background: #fffbeb; border: 1px solid #fcd34d; color: #92400e; }
+
+/* ── 5Q FRAMEWORK ── */
+.fiveq-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 20px 0;
+}
+
+.fiveq-card {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.fiveq-num {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+
+.fiveq-q {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.fiveq-a {
+  font-size: 12px;
+  color: var(--teal);
+}
+
+/* ── STORY BLOCK ── */
+.story-block {
+  background: var(--bg3);
+  border-left: 4px solid var(--gold);
+  border-radius: 0 10px 10px 0;
+  padding: 20px 24px;
+  margin: 20px 0;
+  font-size: 14px;
+  color: var(--text2);
+  line-height: 1.8;
+}
+
+.story-block strong { color: var(--text); }
+
+/* ── DIVIDER ── */
+.divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 32px 0;
+}
+
+/* ── STEPPER DOTS ── */
+.stepper-nav {
+  display: flex;
+  gap: 6px;
+  margin: 0 0 20px;
+}
+
+.stepper-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--bg4);
+  border: 1px solid var(--border2);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.stepper-dot.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  width: 24px;
+  border-radius: 4px;
+}
+
+/* ── HERO ── */
+#hero {
+  padding: 60px 48px;
+  border-bottom: 1px solid var(--border);
+  background: radial-gradient(ellipse 60% 40% at 30% 50%, rgba(91,141,239,0.06) 0%, transparent 70%);
+}
+
+.hero-eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 16px;
+}
+
+.hero-title {
+  font-size: 36px;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1.2;
+  margin-bottom: 16px;
+}
+
+.hero-title span { color: var(--accent); }
+
+.hero-meta {
+  display: flex;
+  gap: 20px;
+  margin-top: 28px;
+  flex-wrap: wrap;
+}
+
+.hero-chip {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 12px;
+  color: var(--text2);
+}
+
+/* ── RESP ── */
+@media (max-width: 1200px) {
+  :root { --right-w: 260px; }
+}
+
+.section-nav-btn {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 40px;
+  gap: 12px;
+}
+
+.case-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.case-tab {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 13px;
+  color: var(--text2);
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: var(--font);
+}
+
+.case-tab.active {
+  background: rgba(91,141,239,0.1);
+  border-color: rgba(91,141,239,0.3);
+  color: var(--accent);
+}
+
+.case-panel { display: none; }
+.case-panel.active { display: block; }
+
+.loading-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text3);
+  font-size: 12px;
+  padding: 8px 0;
+}
+
+.loading-dots span {
+  animation: ld 1.2s infinite;
+  display: inline-block;
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: var(--accent);
+  margin: 0 1px;
+}
+
+.loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+.loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes ld {
+  0%,80%,100%{opacity:0.2;transform:translateY(0)}
+  40%{opacity:1;transform:translateY(-4px)}
+}
+</style>
+</head>
+<body>
+
+<!-- LEFT NAV -->
+<nav id="nav">
+  <div id="nav-header">
+    <h1>AI 系統設計課</h1>
+    <p>生成式 AI 落地實戰</p>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-title">開始</div>
+    <a class="nav-item active" onclick="goto('home')">🏠 課程總覽</a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-title">第一部分 · 企業案例</div>
+    <a class="nav-item" onclick="goto('case1')">🏭 案例一：報價助理 <span class="nav-badge hot">🔥</span></a>
+    <a class="nav-item" onclick="goto('case2')">🎨 案例二：設計師助手</a>
+    <a class="nav-item" onclick="goto('case3')">📚 案例三：AI 教學助教</a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-title">第二部分 · 完整系統導入流程</div>
+    <a class="nav-item" onclick="goto('step1')">📖 Step 1：真實故事</a>
+    <a class="nav-item" onclick="goto('step2')">🔍 Step 2：痛點分析</a>
+    <a class="nav-item" onclick="goto('step3')">💡 Step 3：設計思考</a>
+    <a class="nav-item" onclick="goto('step4')">📄 Step 4：需求規格書</a>
+    <a class="nav-item" onclick="goto('step5')">⚙️ Step 5：技術選型</a>
+    <a class="nav-item" onclick="goto('step6')">🧱 Step 6：系統架構</a>
+    <a class="nav-item" onclick="goto('step7')">🛠 Step 7：實作流程</a>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-title">第三部分 · 軟體工程觀念</div>
+    <a class="nav-item" onclick="goto('sdd')">📐 SDD：規格驅動開發</a>
+    <a class="nav-item" onclick="goto('tdd')">🧪 TDD：測試驅動開發</a>
+    <a class="nav-item" onclick="goto('bdd')">🎭 BDD：行為驅動開發</a>
+  </div>
+
+  <div style="margin-top: auto; padding: 16px 0;">
+    <div class="progress-label" id="prog-label">進度 0 / 13</div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="prog-fill" style="width:0%"></div>
+    </div>
+  </div>
+</nav>
+
+<!-- MAIN CONTENT -->
+<main id="main">
+
+<!-- HOME -->
+<div id="s-home" class="section active">
+  <div id="hero">
+    <div class="hero-eyebrow">生成式 AI 系統設計與落地實戰</div>
+    <h1 class="hero-title">從企業問題到<br><span>AI 系統</span></h1>
+    <p class="section-desc">不只是 Prompt，而是把 LLM 做成真正能跑的企業系統。<br>本課程帶你走完「問題 → 規格 → 架構 → 實作」的完整流程。</p>
+
+    <div class="hero-meta">
+      <div class="hero-chip">🔧 前置：Prompt、RAG、Agent、MCP</div>
+      <div class="hero-chip">📦 13 個章節</div>
+      <div class="hero-chip">🎯 3 個企業案例</div>
+    </div>
+  </div>
+
+  <div style="padding: 40px 48px;">
+    <h2 class="section-title">🎯 你會學到什麼？</h2>
+    <div class="section-desc">本課程教你真正的 AI 系統設計，從問題出發，做出能落地的系統。</div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 32px;">
+      <div class="card">
+        <div class="card-title"><div class="card-icon icon-blue">1</div>需求拆解</div>
+        <p class="card-body">從模糊的業務問題出發，學會結構化拆解需求，找到 AI 真正能解決的痛點。</p>
+      </div>
+      <div class="card">
+        <div class="card-title"><div class="card-icon icon-teal">2</div>技術選型</div>
+        <p class="card-body">學會一套 5 問框架，判斷哪裡要用 LLM、哪裡用 RAG、哪裡根本不需要 AI。</p>
+      </div>
+      <div class="card">
+        <div class="card-title"><div class="card-icon icon-gold">3</div>系統架構</div>
+        <p class="card-body">把 LLM、RAG、Tool、Workflow 拼成完整系統，理解各層的責任分工。</p>
+      </div>
+      <div class="card">
+        <div class="card-title"><div class="card-icon icon-coral">4</div>規格書撰寫</div>
+        <p class="card-body">學會寫 SRS 需求規格書，作為 AI 開發起點，用 Prompt 驅動整個開發流程。</p>
+      </div>
+    </div>
+
+    <div class="highlight good">
+      <span>✅</span>
+      <span><strong>核心觀念：</strong>AI 不是全部，AI 是系統中的一部分。真正的挑戰是把對的 AI 能力，放在對的系統位置。</span>
+    </div>
+
+    <div class="highlight bad">
+      <span>❌</span>
+      <span><strong>常見錯誤觀念：</strong>遇到問題就丟給 LLM，忽略流程設計、資料品質、邊界條件，最後系統不穩定、難維護。</span>
+    </div>
+
+    <hr class="divider">
+
+    <h2 class="section-title">🗺️ 課程地圖</h2>
+    <div class="flow-steps" style="flex-wrap: wrap; border-radius: 10px;">
+      <div class="flow-step" style="flex: none; width: 25%; border-bottom: 1px solid var(--border); cursor: default; text-align: left; padding: 16px 20px; background: rgba(91,141,239,0.05);">
+        <div class="flow-step-num" style="color: var(--accent); font-weight: 700;">第一部分</div>
+        <div class="flow-step-label" style="color: var(--text);">企業案例 × 3</div>
+        <div style="font-size: 12px; color: var(--text3); margin-top: 6px;">看真實問題如何被 AI 系統解決</div>
+      </div>
+      <div class="flow-step" style="flex: none; width: 25%; border-bottom: 1px solid var(--border); cursor: default; text-align: left; padding: 16px 20px; background: rgba(240,96,96,0.04);">
+        <div class="flow-step-num" style="color: var(--coral); font-weight: 700;">第二部分</div>
+        <div class="flow-step-label" style="color: var(--text);">完整系統導入流程 × 7步</div>
+        <div style="font-size: 12px; color: var(--text3); margin-top: 6px;">從問題到系統的完整設計流程</div>
+      </div>
+      <div class="flow-step" style="flex: none; width: 25%; border-bottom: 1px solid var(--border); cursor: default; text-align: left; padding: 16px 20px; background: rgba(165,124,244,0.04);">
+        <div class="flow-step-num" style="color: var(--purple); font-weight: 700;">第三部分</div>
+        <div class="flow-step-label" style="color: var(--text);">SDD / TDD / BDD</div>
+        <div style="font-size: 12px; color: var(--text3); margin-top: 6px;">用軟體工程方法管理 AI 專案</div>
+      </div>
+      <div class="flow-step" style="flex: none; width: 25%; border-bottom: 1px solid var(--border); cursor: default; text-align: left; padding: 16px 20px; background: rgba(59,201,160,0.04);">
+        <div class="flow-step-num" style="color: var(--teal); font-weight: 700;">整合練習</div>
+        <div class="flow-step-label" style="color: var(--text);">Prompt 生 Spec</div>
+        <div style="font-size: 12px; color: var(--text3); margin-top: 6px;">用 AI 協作，生成完整規格書</div>
+      </div>
+    </div>
+
+    <div class="section-nav-btn">
+      <div></div>
+      <button class="btn" onclick="goto('case1')">開始學習 →</button>
+    </div>
+  </div>
+</div>
+
+<!-- CASE 1 -->
+<div id="s-case1" class="section">
+  <div class="section-badge badge-case">🏭 案例一</div>
+  <h2 class="section-title">智慧工廠報價助理</h2>
+  <p class="section-desc">線材製造公司面對混亂詢價流程，如何用 AI 系統改善？學會分辨哪些環節該用 AI，哪些不該。</p>
+
+  <div class="card">
+    <div class="card-title">📖 問題說明</div>
+    <p class="card-body">某線材製造公司每天收到 20–50 封詢價 Email 與 PDF，業務需要手動：<br>
+    ① 閱讀客戶需求 ② 搜尋歷史報價 ③ 確認庫存規格 ④ 手寫報價單<br><br>
+    平均每封詢價需要 <strong style="color:var(--coral)">2–4 小時</strong>處理，且報價一致性差、錯誤率高。</p>
+  </div>
+
+  <h3 style="font-size: 16px; font-weight: 600; margin: 24px 0 16px;">🧠 系統拆解：哪裡用 AI？哪裡不用？</h3>
+
+  <table class="edu-table">
+    <tr>
+      <th>流程步驟</th>
+      <th>技術選擇</th>
+      <th>理由</th>
+    </tr>
+    <tr>
+      <td>讀取 Email / PDF，提取詢價欄位</td>
+      <td><span class="tag tag-llm">LLM</span></td>
+      <td>非結構化文字 → 結構化資料，LLM 最擅長</td>
+    </tr>
+    <tr>
+      <td>查詢歷史相似報價案例</td>
+      <td><span class="tag tag-rag">RAG</span></td>
+      <td>需從大量歷史資料中語意搜尋</td>
+    </tr>
+    <tr>
+      <td>查詢庫存、匯率、原料成本</td>
+      <td><span class="tag tag-api">API / MCP</span></td>
+      <td>即時數字，必須查 ERP 系統，不能靠 LLM 猜</td>
+    </tr>
+    <tr>
+      <td>套用標準價格公式計算報價</td>
+      <td><span class="tag tag-rule">規則計算</span></td>
+      <td>精確計算，LLM 有幻覺風險，絕不能用！</td>
+    </tr>
+    <tr>
+      <td>生成報價單文件</td>
+      <td><span class="tag tag-llm">LLM</span></td>
+      <td>格式化輸出，語言潤飾</td>
+    </tr>
+    <tr>
+      <td>業務主管最終審核</td>
+      <td><span class="tag tag-rule">人工核簽</span></td>
+      <td>金額超過門檻，必須人工確認，AI 不能直接送出</td>
+    </tr>
+  </table>
+
+  <div class="task-block">
+    <div class="task-header">
+      <div class="task-icon">🎯</div>
+      <div class="task-title">學生任務：哪一段不應該用 LLM？</div>
+    </div>
+    <p style="font-size: 14px; color: var(--text2); margin-bottom: 14px;">以下哪個步驟，<strong style="color: var(--coral)">絕對不應該</strong>讓 LLM 直接決定輸出？</p>
+
+    <div class="quiz-options">
+      <button class="quiz-opt" onclick="quiz1('a')">A. 從 PDF 中提取客戶需求欄位</button>
+      <button class="quiz-opt" onclick="quiz1('b')">B. 套用公式計算最終報價金額</button>
+      <button class="quiz-opt" onclick="quiz1('c')">C. 搜尋歷史相似案例</button>
+      <button class="quiz-opt" onclick="quiz1('d')">D. 生成報價單的說明文字</button>
+    </div>
+
+    <div id="q1-feedback" class="quiz-feedback">
+    </div>
+  </div>
+
+  <div class="highlight info">
+    <span>💡</span>
+    <span><strong>核心原則：</strong>涉及金錢計算、法規遵從、即時數據的部分，必須用精確程式邏輯，LLM 只負責「理解語言」與「生成語言」。</span>
+  </div>
+
+  <div class="section-nav-btn">
+    <button class="btn btn-ghost" onclick="goto('home')">← 返回</button>
+    <button class="btn" onclick="goto('case2')">案例二 →</button>
+  </div>
+</div>
+
+<!-- CASE 2 -->
+<div id="s-case2" class="section">
+  <div class="section-badge badge-case">🎨 案例二</div>
+  <h2 class="section-title">AI 設計師助手</h2>
+  <p class="section-desc">客戶需求模糊、設計師反覆溝通——如何用 AI 系統提升效率？</p>
+
+  <div class="card">
+    <div class="card-title">📖 問題說明</div>
+    <p class="card-body">設計公司面對的痛點：<br>
+    • 客戶說「我想要一個很酷的網站」，沒有具體需求<br>
+    • 設計師花 60% 時間在需求釐清，而非設計本身<br>
+    • 每次改版都要重新溝通，版本管理混亂<br><br>
+    <strong style="color: var(--gold)">目標：</strong>用 AI 幫助設計師快速理解客戶需求、生成草稿、管理版本。</p>
+  </div>
+
+  <h3 style="font-size: 16px; font-weight: 600; margin: 24px 0 16px;">🧠 系統架構</h3>
+
+  <table class="edu-table">
+    <tr>
+      <th>功能</th>
+      <th>技術</th>
+      <th>說明</th>
+    </tr>
+    <tr>
+      <td>需求釐清對話</td>
+      <td><span class="tag tag-llm">LLM + 對話流</span></td>
+      <td>引導客戶說清楚風格、目標族群、預算</td>
+    </tr>
+    <tr>
+      <td>搜尋設計參考</td>
+      <td><span class="tag tag-rag">RAG</span></td>
+      <td>從公司設計庫中找相似風格案例</td>
+    </tr>
+    <tr>
+      <td>生成線框稿描述</td>
+      <td><span class="tag tag-llm">LLM</span></td>
+      <td>產生 UI 元素說明與版面建議</td>
+    </tr>
+    <tr>
+      <td>版本記錄與比較</td>
+      <td><span class="tag tag-rule">資料庫 + 規則</span></td>
+      <td>精確記錄，不能靠 LLM 記憶</td>
+    </tr>
+    <tr>
+      <td>客戶審核 & 簽核</td>
+      <td><span class="tag tag-rule">人工流程</span></td>
+      <td>法律與商業責任，必須人工確認</td>
+    </tr>
+  </table>
+
+  <div class="highlight bad">
+    <span>❌</span>
+    <span><strong>常見錯誤：</strong>讓 LLM 直接生成「最終設計規格」並傳給工程師實作，沒有人工確認——結果方向跑掉，浪費大量工時。</span>
+  </div>
+
+  <div class="highlight good">
+    <span>✅</span>
+    <span><strong>正確做法：</strong>AI 負責「理解語言 + 搜尋參考 + 生成草稿」，人負責「判斷、決策、簽核」，系統負責「記錄、計算、執行」。</span>
+  </div>
+
+  <div class="task-block">
+    <div class="task-header">
+      <div class="task-icon">🎯</div>
+      <div class="task-title">學生思考：這個系統的 MVP 應該先做什麼？</div>
+    </div>
+    <p style="font-size: 14px; color: var(--text2); margin-bottom: 14px;">如果只能做一個功能先上線，你會選哪個？為什麼？請在右側 Prompt 區輸入你的想法。</p>
+    <button class="btn btn-ghost" onclick="setPrompt('case2-mvp')">載入任務 Prompt →</button>
+  </div>
+
+  <div class="section-nav-btn">
+    <button class="btn btn-ghost" onclick="goto('case1')">← 案例一</button>
+    <button class="btn" onclick="goto('case3')">案例三 →</button>
+  </div>
+</div>
+
+<!-- CASE 3 -->
+<div id="s-case3" class="section">
+  <div class="section-badge badge-case">📚 案例三</div>
+  <h2 class="section-title">AI 教學助教</h2>
+  <p class="section-desc">出題、批改、解釋——AI 如何在教育場景中成為系統的一部分？</p>
+
+  <div class="card">
+    <div class="card-title">📖 問題說明</div>
+    <p class="card-body">大學教授面對的挑戰：<br>
+    • 200 人修課，作業批改耗費大量助教人力<br>
+    • 同學在不同時間點需要個人化解釋<br>
+    • 出題庫難以維護，容易重複<br><br>
+    <strong style="color: var(--gold)">目標：</strong>用 AI 助教輔助出題、批改、個人化解釋，老師掌握最終評分。</p>
+  </div>
+
+  <h3 style="font-size: 16px; font-weight: 600; margin: 24px 0 16px;">🧠 功能模組 × 技術選型</h3>
+
+  <table class="edu-table">
+    <tr>
+      <th>功能</th>
+      <th>技術</th>
+      <th>AI 的角色</th>
+    </tr>
+    <tr>
+      <td>依教學目標出題</td>
+      <td><span class="tag tag-llm">LLM</span></td>
+      <td>生成題目草稿，老師審核後入庫</td>
+    </tr>
+    <tr>
+      <td>搜尋題庫避免重複</td>
+      <td><span class="tag tag-rag">RAG</span></td>
+      <td>語意搜尋，找相似題目</td>
+    </tr>
+    <tr>
+      <td>程式碼作業自動測試</td>
+      <td><span class="tag tag-rule">自動化測試</span></td>
+      <td>不能靠 LLM，要跑測試案例</td>
+    </tr>
+    <tr>
+      <td>文字作業初步批改</td>
+      <td><span class="tag tag-llm">LLM</span></td>
+      <td>給出評語與分數建議，老師確認</td>
+    </tr>
+    <tr>
+      <td>個人化錯誤解釋</td>
+      <td><span class="tag tag-llm">LLM + Memory</span></td>
+      <td>根據學生的答題歷程，個人化說明</td>
+    </tr>
+    <tr>
+      <td>最終成績登錄</td>
+      <td><span class="tag tag-rule">人工 + 系統</span></td>
+      <td>老師最終確認，AI 不能直接改成績</td>
+    </tr>
+  </table>
+
+  <div class="task-block">
+    <div class="task-header">
+      <div class="task-icon">🎯</div>
+      <div class="task-title">學生任務：辨別 AI 問題 vs 流程問題</div>
+    </div>
+    <p style="font-size: 14px; color: var(--text2); margin-bottom: 14px;">下列哪一個是「AI 能力不足」的問題？</p>
+
+    <div class="quiz-options">
+      <button class="quiz-opt" onclick="quiz3('a')">A. LLM 批改文字作業時，偶爾給出不一致的評分標準</button>
+      <button class="quiz-opt" onclick="quiz3('b')">B. 老師沒有審核 AI 出的題目就直接用在考試</button>
+    </div>
+    <div id="q3-feedback" class="quiz-feedback"></div>
+  </div>
+
+  <div class="highlight info">
+    <span>💡</span>
+    <span><strong>結論：</strong>三個案例都印證同一件事——AI 是工具，系統是容器，流程是靈魂。設計好的 Human-in-the-Loop 機制，才是 AI 落地的關鍵。</span>
+  </div>
+
+  <div class="section-nav-btn">
+    <button class="btn btn-ghost" onclick="goto('case2')">← 案例二</button>
+    <button class="btn" onclick="goto('step1')">進入主線 →</button>
+  </div>
+</div>
+
+<!-- STEP 1 -->
+<div id="s-step1" class="section">
+  <div class="section-badge badge-main">🔥 主線 Step 1</div>
+  <h2 class="section-title">真實故事：混亂的詢價地獄</h2>
+  <p class="section-desc">在設計解法之前，先進入問題的現場——感受業務人員每天在經歷什麼。</p>
+
+  <div class="story-block">
+    <strong>早上 8:30，業務小王打開電腦。</strong><br><br>
+    信箱裡有 23 封新郵件。其中 11 封是詢價——有日文、有英文、有夾著 PDF 的、有只寫「給我報個價」的。<br><br>
+    他打開第一封，是日本客戶要 UL 認證的 18 AWG 線材，規格寫得很籠統。他得先去 SAP 系統查庫存，再去共用硬碟翻去年的報價紀錄，找到類似規格的案子，然後用 Excel 套公式計算....<br><br>
+    <strong>到了下午 3 點，他才回覆完第 5 封。</strong><br><br>
+    今天還有 6 封在等。明天又會有 20 封進來。<br><br>
+    而且上個月，他報錯了一個客戶的 MOQ，損失了一筆大訂單。因為他記錯了一個舊報價。
+  </div>
+
+  <h3 style="font-size: 16px; font-weight: 600; margin: 24px 0 16px;">📊 業務現況數據</h3>
+
+  <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px;">
+    <div class="card" style="text-align: center; padding: 20px 12px;">
+      <div style="font-size: 28px; font-weight: 800; color: var(--coral); margin-bottom: 4px;">2–4h</div>
+      <div style="font-size: 12px; color: var(--text3);">每封詢價處理時間</div>
+    </div>
+    <div class="card" style="text-align: center; padding: 20px 12px;">
+      <div style="font-size: 28px; font-weight: 800; color: var(--gold); margin-bottom: 4px;">20+</div>
+      <div style="font-size: 12px; color: var(--text3);">每日詢價量</div>
+    </div>
+    <div class="card" style="text-align: center; padding: 20px 12px;">
+      <div style="font-size: 28px; font-weight: 800; color: var(--coral); margin-bottom: 4px;">15%</div>
+      <div style="font-size: 12px; color: var(--text3);">報價錯誤率</div>
+    </div>
+    <div class="card" style="text-align: center; padding: 20px 12px;">
+      <div style="font-size: 28px; font-weight: 800; color: var(--teal); margin-bottom: 4px;">3天</div>
+      <div style="font-size: 12px; color: var(--text3);">平均回覆時間</div>
+    </div>
+  </div>
+
+  <div class="highlight warn">
+    <span>🤔</span>
+    <span>在開始設計 AI 解法前，你必須先問：<strong>「這是 AI 問題，還是流程問題？」</strong>很多時候，流程改善比加 AI 更有效。</span>
+  </div>
+
+  <div class="section-nav-btn">
+    <button class="btn btn-ghost" onclick="goto('case3')">← 案例三</button>
+    <button class="btn" onclick="goto('step2')">Step 2：痛點分析 →</button>
+  </div>
+</div>
+
+<!-- STEP 2 -->
+<div id="s-step2" class="section">
+  <div class="section-badge badge-main">🔥 主線 Step 2</div>
+  <h2 class="section-title">痛點分析</h2>
+  <p class="section-desc">把模糊的「感覺很痛」拆解成可設計的結構化問題。</p>
+
+  <table class="edu-table">
+    <tr>
+      <th>痛點</th>
+      <th>根本原因</th>
+      <th>後果</th>
+    </tr>
+    <tr>
+      <td>詢價格式不一致</td>
+      <td>客戶自行填寫，無標準化表單</td>
+      <td>業務需手動解讀，易誤解需求</td>
+    </tr>
+    <tr>
+      <td>歷史資料分散</td>
+      <td>報價存在個人電腦 / 共用硬碟，無統一系統</td>
+      <td>找不到相似案例，重複造輪子</td>
+    </tr>
+    <tr>
+      <td>報價公式靠個人記憶</td>
+      <td>公式未被系統化，存在業務腦袋中</td>
+      <td>不一致、錯誤率高、難以交接</td>
+    </tr>
+    <tr>
+      <td>回覆速度慢</td>
+      <td>流程串接差，每個步驟都需人工切換系統</td>
+      <td>客戶流失、競爭力下降</td>
+    </tr>
+    <tr>
+      <td>錯誤發生才知道</td>
+      <td>沒有自動驗證機制</td>
+      <td>錯誤報價造成損失</td>
+    </tr>
+  </table>
+
+  <div class="task-block">
+    <div class="task-header">
+      <div class="task-icon">🎯</div>
+      <div class="task-title">任務：這是 AI 問題還是流程問題？</div>
+    </div>
+    <p style="font-size: 14px; color: var(--text2); margin-bottom: 14px;">「業務找不到歷史報價」——你認為這個痛點的主要解法是什麼？</p>
+
+    <div class="quiz-options">
+      <button class="quiz-opt" onclick="quiz2('a')">A. 導入更強的 LLM，讓它直接從記憶中生成報價</button>
+      <button class="quiz-opt" onclick="quiz2('b')">B. 建立歷史報價資料庫 + RAG 搜尋系統</button>
+      <button class="quiz-opt" onclick="quiz2('c')">C. 強制要求業務把所有案子都手動整理成 Excel</button>
+      <button class="quiz-opt" onclick="quiz2('d')">D. 用 AI 替業務回憶歷史案例，不需要建資料庫</button>
+    </div>
+    <div id="q2-feedback" class="quiz-feedback"></div>
+  </div>
+
+  <div class="highlight info">
+    <span>💡</span>
+    <span><strong>設計原則：</strong>先用「人工 + 流程」能解決的問題，不一定要 AI。但如果問題是「大量非結構化資料的搜尋與理解」，那 RAG 就是對的工具。</span>
+  </div>
+
+  <div class="section-nav-btn">
+    <button class="btn btn-ghost" onclick="goto('step1')">← Step 1</button>
+    <button class="btn" onclick="goto('step3')">Step 3：設計思考 →</button>
+  </div>
+</div>
+
+<!-- STEP 3 -->
+<div id="s-step3" class="section">
+  <div class="section-badge badge-main">🔥 主線 Step 3</div>
+  <h2 class="section-title">設計思考 (Design Thinking)</h2>
+  <p class="section-desc">用 5 個步驟，從「人的問題」出發，設計出真正有用的系統。</p>
+
+  <div class="stepper-nav" id="dt-dots">
+    <div class="stepper-dot active" onclick="dtGo(0)"></div>
+    <div class="stepper-dot" onclick="dtGo(1)"></div>
+    <div class="stepper-dot" onclick="dtGo(2)"></div>
+    <div class="stepper-dot" onclick="dtGo(3)"></div>
+    <div class="stepper-dot" onclick="dtGo(4)"></div>
+  </div>
+
+  <div id="dt-0" class="flow-content active card">
+    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 14px;">
+      <div style="width: 36px; height: 36px; border-radius: 50%; background: rgba(91,141,239,0.15); color: var(--accent); font-weight: 700; display: flex; align-items: center; justify-content: center;">1</div>
+      <div>
+        <div style="font-size: 14px; font-weight: 700; color: var(--accent);">Empathize 同理</div>
+        <div style="font-size: 12px; color: var(--text3);">站在業務的立場思考</div>
+      </div>
+    </div>
+    <p class="card-body">業務每天面對的不只是「找資料」，而是<strong style="color:var(--text)">時間壓力 + 錯誤焦慮 + 系統切換的挫折感</strong>。他們真正想要的不是「AI 工具」，而是：<br><br>
+    ✦ 快速找到我要的資料<br>
+    ✦ 不用切換 5 個系統<br>
+    ✦ 報出去的價格不要出錯<br>
+    ✦ 不要加班</p>
+    <button class="btn btn-ghost" style="margin-top: 14px;" onclick="dtGo(1)">下一步 →</button>
+  </div>
+
+  <div id="dt-1" class="flow-content card">
+    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 14px;">
+      <div style="width: 36px; height: 36px; border-radius: 50%; background: rgba(232,169,64,0.15); color: var(--gold); font-weight: 700; display: flex; align-items: center; justify-content: center;">2</div>
+      <div>
+        <div style="font-size: 14px; font-weight: 700; color: var(--gold);">Define 定義問題</div>
+        <div style="font-size: 12px; color: var(--text3);">把觀察轉換成可設計的問題陳述</div>
+      </div>
+    </div>
+    <div class="highlight info">
+      <span>📌</span>
+      <span><strong>問題陳述（HMW）：</strong><br>「我們要如何幫助業務，在 30 分鐘內完成一封詢價回覆，且錯誤率低於 2%？」</span>
+    </div>
+    <p class="card-body">注意：問題陳述要有<strong style="color:var(--text)">可量化的目標（30 分鐘、2%）</strong>，這樣才能在最後驗收時知道有沒有達到。</p>
+    <div style="display: flex; gap: 8px; margin-top: 14px;">
+      <button class="btn btn-ghost" onclick="dtGo(0)">← 上一步</button>
+      <button class="btn btn-ghost" onclick="dtGo(2)">下一步 →</button>
+    </div>
+  </div>
+
+  <div id="dt-2" class="flow-content card">
+    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 14px;">
+      <div style="width: 36px; height: 36px; border-radius: 50%; background: rgba(59,201,160,0.15); color: var(--teal); font-weight: 700; display: flex; align-items: center; justify-content: center;">3</div>
+      <div>
+        <div style="font-size: 14px; font-weight: 700; color: var(--teal);">Ideate 發想功能</div>
+        <div style="font-size: 12px; color: var(--text3);">腦力激盪，不要太早收斂</div>
+      </div>
+    </div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
+      <div style="background: var(--bg3); border-radius: 8px; padding: 12px; font-size: 13px; color: var(--text2);">📧 自動解析詢價 Email</div>
+      <div style="background: var(--bg3); border-radius: 8px; padding: 12px; font-size: 13px; color: var(--text2);">🔍 歷史案例語意搜尋</div>
+      <div style="background: var(--bg3); border-radius: 8px; padding: 12px; font-size: 13px; color: var(--text2);">📊 自動查詢 ERP 庫存</div>
+      <div style="background: var(--bg3); border-radius: 8px; padding: 12px; font-size: 13px; color: var(--text2);">💰 公式計算報價初稿</div>
+      <div style="background: var(--bg3); border-radius: 8px; padding: 12px; font-size: 13px; color: var(--text2);">📝 生成報價單文件</div>
+      <div style="background: var(--bg3); border-radius: 8px; padding: 12px; font-size: 13px; color: var(--text2);">✅ 業務一鍵審核送出</div>
+    </div>
+    <div style="display: flex; gap: 8px; margin-top: 14px;">
+      <button class="btn btn-ghost" onclick="dtGo(1)">← 上一步</button>
+      <button class="btn btn-ghost" onclick="dtGo(3)">下一步 →</button>
+    </div>
+  </div>
+
+  <div id="dt-3" class="flow-content card">
+    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 14px;">
+      <div style="width: 36px; height: 36px; border-radius: 50%; background: rgba(165,124,244,0.15); color: var(--purple); font-weight: 700; display: flex; align-items: center; justify-content: center;">4</div>
+      <div>
+        <div style="font-size: 14px; font-weight: 700; color: var(--purple);">Prototype 建 MVP</div>
+        <div style="font-size: 12px; color: var(--text3);">先做最小可行版本驗證假設</div>
+      </div>
+    </div>
+    <p class="card-body" style="margin-bottom: 14px;">MVP 不等於完整系統，只要能驗證最核心的假設：</p>
+    <div class="highlight good">
+      <span>🎯</span>
+      <span><strong>MVP 聚焦：</strong>只做「Email 解析 + 歷史案例搜尋」兩個功能，讓業務用 2 週，看看省了多少時間。其餘功能之後再加。</span>
+    </div>
+    <div style="display: flex; gap: 8px; margin-top: 14px;">
+      <button class="btn btn-ghost" onclick="dtGo(2)">← 上一步</button>
+      <button class="btn btn-ghost" onclick="dtGo(4)">下一步 →</button>
+    </div>
+  </div>
+
+  <div id="dt-4" class="flow-content card">
+    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 14px;">
+      <div style="width: 36px; height: 36px; border-radius: 50%; background: rgba(240,96,96,0.15); color: var(--coral); font-weight: 700; display: flex; align-items: center; justify-content: center;">5</div>
+      <div>
+        <div style="font-size: 14px; font-weight: 700; color: var(--coral);">Test 驗證</div>
+        <div style="font-size: 12px; color: var(--text3);">用數據說話，而非感覺</div>
+      </div>
+    </div>
+    <table class="edu-table" style="margin-top: 10px;">
+      <tr>
+        <th>驗收指標</th>
+        <th>目標值</th>
+        <th>測量方式</th>
+      </tr>
+      <tr>
+        <td>Email 解析準確率</td>
+        <td>> 90%</td>
+        <td>抽樣 100 封，人工核對</td>
+      </tr>
+      <tr>
+        <td>報價處理時間</td>
+        <td>< 30 分鐘</td>
+        <td>系統記錄時間戳</td>
+      </tr>
+      <tr>
+        <td>業務滿意度</td>
+        <td>NPS > 7</td>
+        <td>2 週後問卷</td>
+      </tr>
+    </table>
+    <div style="display: flex; gap: 8px; margin-top: 14px;">
+      <button class="btn btn-ghost" onclick="dtGo(3)">← 上一步</button>
+      <button class="btn" onclick="goto('step4')">繼續 Step 4 →</button>
+    </div>
+  </div>
+
+  <div class="section-nav-btn">
+    <button class="btn btn-ghost" onclick="goto('step2')">← Step 2</button>
+    <button class="btn" onclick="goto('step4')">Step 4：需求規格書 →</button>
+  </div>
+</div>
+
+<!-- STEP 4 -->
+<div id="s-step4" class="section">
+  <div class="section-badge badge-main">🔥 主線 Step 4（重點）</div>
+  <h2 class="section-title">需求規格書 (Spec)</h2>
+  <p class="section-desc">為什麼 AI 專案一定要先寫 Spec？因為 LLM 無法猜出你心裡想的系統。Spec 是人與 AI 協作的契約。</p>
+
+  <div class="highlight warn">
+    <span>⚠️</span>
+    <span><strong>沒有 Spec 的後果：</strong>Prompt 改了又改、生出來的程式不符期望、每次換人問 LLM 都得到不同結果——這不是 AI 的問題，是你的問題。</span>
+  </div>
+
+  <h3 style="font-size: 16px; font-weight: 600; margin: 24px 0 16px;">📄 Spec 標準結構</h3>
+
+  <div class="spec-section">
+    <div class="spec-section-title">1. 專案背景</div>
+    <div class="spec-content">說明為什麼要做這個系統、解決什麼問題、對誰有價值。<br><em style="color: var(--text3)">例：某線材公司每日處理 20+ 詢價，平均 3 天回覆，客戶流失率高...</em></div>
+  </div>
+
+  <div class="spec-section" style="border-left-color: var(--gold);">
+    <div class="spec-section-title" style="color: var(--gold);">2. 使用者角色 (Personas)</div>
+    <div class="spec-content">誰會用這個系統？他們的技術程度、使用習慣、最在乎的事？<br><em style="color: var(--text3)">例：業務小王（每天 20 封信，不擅長打字，最在乎速度和正確率）</em></div>
+  </div>
+
+  <div class="spec-section" style="border-left-color: var(--teal);">
+    <div class="spec-section-title" style="color: var(--teal);">3. 使用情境 (User Stories)</div>
+    <div class="spec-content">「身為 [使用者]，我想要 [功能]，以便 [達成目標]」<br><em style="color: var(--text3)">例：身為業務，我想要系統自動提取 Email 中的規格，以便不用手動整理</em></div>
+  </div>
+
+  <div class="spec-section" style="border-left-color: var(--purple);">
+    <div class="spec-section-title" style="color: var(--purple);">4. 功能需求 (FR)</div>
+    <div class="spec-content">系統「要做什麼」，每一條都要可測試<br><em style="color: var(--text3)">FR-01: 系統應能從 Email 提取：客戶名稱、產品型號、數量、交期</em></div>
+  </div>
+
+  <div class="spec-section" style="border-left-color: var(--coral);">
+    <div class="spec-section-title" style="color: var(--coral);">5. 非功能需求 (NFR)</div>
+    <div class="spec-content">效能、安全、可用性、資料隱私等<br><em style="color: var(--text3)">NFR-01: Email 解析時間 &lt; 10 秒；NFR-02: 報價資料不得傳送到 LLM 供應商伺服器</em></div>
+  </div>
+
+  <div class="spec-section" style="border-left-color: var(--text3);">
+    <div class="spec-section-title" style="color: var(--text3);">6. 邊界 & 排除項目</div>
+    <div class="spec-content">明確說出不做什麼，防止範圍蔓延<br><em style="color: var(--text3)">本版本不支援：多語言（僅中英文）、自動送出報價（須人工審核）</em></div>
+  </div>
+
+  <div class="spec-section" style="border-left-color: var(--green);">
+    <div class="spec-section-title" style="color: #5cb85c;">7. 驗收標準 </div>
+    <div class="spec-content">什麼叫做「做完」？可量化的定義<br><em style="color: var(--text3)">AC-01: 解析準確率 &gt; 90%（抽樣 100 封）；AC-02: 業務完成報價時間 &lt; 30 分鐘</em></div>
+  </div>
+
+  <div class="task-block">
+    <div class="task-header">
+      <div class="task-icon">🎯</div>
+      <div class="task-title">互動任務：用 Prompt 生成規格書</div>
+    </div>
+    <p style="font-size: 14px; color: var(--text2); margin-bottom: 14px;">在右側輸入你的案例描述，按「生成 Spec」，看看 AI 如何協助你撰寫規格書。</p>
+    <button class="btn" onclick="setPrompt('spec-gen')">載入 Spec 生成 Prompt →</button>
+  </div>
+
+  <div class="section-nav-btn">
+    <button class="btn btn-ghost" onclick="goto('step3')">← Step 3</button>
+    <button class="btn" onclick="goto('step5')">Step 5：技術選型 →</button>
+  </div>
+</div>
+
+<!-- STEP 5 -->
+<div id="s-step5" class="section">
+  <div class="section-badge badge-main">🔥 主線 Step 5</div>
+  <h2 class="section-title">技術選型：AI 系統 5 問框架</h2>
+  <p class="section-desc">面對任何 AI 系統設計，先回答這 5 個問題，就能知道需要哪些技術元件。</p>
+
+  <div class="fiveq-grid">
+    <div class="fiveq-card">
+      <div class="fiveq-num">1</div>
+      <div>
+        <div class="fiveq-q">要知識嗎？</div>
+        <div class="fiveq-a">→ 用 RAG</div>
+        <div style="font-size: 12px; color: var(--text3); margin-top: 4px;">需要搜尋文件、歷史資料、知識庫</div>
+      </div>
+    </div>
+    <div class="fiveq-card">
+      <div class="fiveq-num" style="background: var(--teal);">2</div>
+      <div>
+        <div class="fiveq-q">要行動嗎？</div>
+        <div class="fiveq-a">→ 用 MCP / Tool</div>
+        <div style="font-size: 12px; color: var(--text3); margin-top: 4px;">需要呼叫 API、查資料庫、執行操作</div>
+      </div>
+    </div>
+    <div class="fiveq-card">
+      <div class="fiveq-num" style="background: var(--gold);">3</div>
+      <div>
+        <div class="fiveq-q">要流程嗎？</div>
+        <div class="fiveq-a">→ 用 Agent / Workflow</div>
+        <div style="font-size: 12px; color: var(--text3); margin-top: 4px;">需要多步驟、條件判斷、自動化執行</div>
+      </div>
+    </div>
+    <div class="fiveq-card">
+      <div class="fiveq-num" style="background: var(--coral);">4</div>
+      <div>
+        <div class="fiveq-q">要穩定嗎？</div>
+        <div class="fiveq-a">→ 用 限制條件</div>
+        <div style="font-size: 12px; color: var(--text3); margin-top: 4px;">需要防止幻覺、過濾不良輸出、人工審核</div>
+      </div>
+    </div>
+    <div class="fiveq-card" style="grid-column: span 2;">
+      <div class="fiveq-num" style="background: var(--purple);">5</div>
+      <div>
+        <div class="fiveq-q">要記住嗎？</div>
+        <div class="fiveq-a">→ 用 Memory / State</div>
+        <div style="font-size: 12px; color: var(--text3); margin-top: 4px;">需要跨對話記住用戶偏好、歷史狀態、上下文</div>
+      </div>
+    </div>
+  </div>
+
+  <h3 style="font-size: 16px; font-weight: 600; margin: 24px 0 16px;">🏭 套用到報價助理</h3>
+
+  <table class="edu-table">
+    <tr>
+      <th>問題</th>
+      <th>答案</th>
+      <th>結論</th>
+    </tr>
+    <tr>
+      <td>要知識嗎？（歷史報價）</td>
+      <td>✅ 是</td>
+      <td><span class="tag tag-rag">RAG</span> 歷史案例向量資料庫</td>
+    </tr>
+    <tr>
+      <td>要行動嗎？（查 ERP / 庫存）</td>
+      <td>✅ 是</td>
+      <td><span class="tag tag-api">MCP Tool</span> 連接 ERP API</td>
+    </tr>
+    <tr>
+      <td>要流程嗎？（多步驟處理）</td>
+      <td>✅ 是</td>
+      <td><span class="tag tag-llm">Agent</span> 解析 → 搜尋 → 計算 → 生成</td>
+    </tr>
+    <tr>
+      <td>要穩定嗎？（金額不能出錯）</td>
+      <td>✅ 必須</td>
+      <td><span class="tag tag-rule">限制條件</span> 人工審核 + 公式驗證</td>
+    </tr>
+    <tr>
+      <td>要記住嗎？（客戶偏好）</td>
+      <td>⚡ 後期考慮</td>
+      <td><span class="tag tag-rule">Memory</span> MVP 先不做</td>
+    </tr>
+  </table>
+
+  <div class="task-block">
+    <div class="task-header">
+      <div class="task-icon">🎯</div>
+      <div class="task-title">任務：用 5 問框架分析你的案例</div>
+    </div>
+    <p style="font-size: 14px; color: var(--text2); margin-bottom: 14px;">把你想到的 AI 應用案例，套用這 5 個問題，載入右側 Prompt 讓 AI 幫你分析。</p>
+    <button class="btn" onclick="setPrompt('5q-analysis')">載入 5 問分析 Prompt →</button>
+  </div>
+
+  <div class="section-nav-btn">
+    <button class="btn btn-ghost" onclick="goto('step4')">← Step 4</button>
+    <button class="btn" onclick="goto('step6')">Step 6：系統架構 →</button>
+  </div>
+</div>
+
+<!-- STEP 6 -->
+<div id="s-step6" class="section">
+  <div class="section-badge badge-main">🔥 主線 Step 6</div>
+  <h2 class="section-title">系統架構拼裝</h2>
+  <p class="section-desc">把各個 AI 能力元件，按照責任分工，組裝成完整的四層架構。</p>
+
+  <div class="arch-layer" style="border-color: rgba(91,141,239,0.3); background: rgba(91,141,239,0.04);">
+    <div class="arch-layer-title" style="color: var(--accent);">🖥️ UI 層（使用者界面）</div>
+    <div class="arch-layer-items">
+      <div class="arch-chip">業務操作介面</div>
+      <div class="arch-chip">Email 上傳入口</div>
+      <div class="arch-chip">報價單預覽</div>
+      <div class="arch-chip">審核 / 送出按鈕</div>
+    </div>
+  </div>
+
+  <div style="text-align: center; color: var(--text3); font-size: 18px; padding: 4px 0;">↕</div>
+
+  <div class="arch-layer" style="border-color: rgba(232,169,64,0.3); background: rgba(232,169,64,0.04);">
+    <div class="arch-layer-title" style="color: var(--gold);">🎛️ Orchestrator 層（流程協調）</div>
+    <div class="arch-layer-items">
+      <div class="arch-chip">LLM Agent</div>
+      <div class="arch-chip">工作流引擎</div>
+      <div class="arch-chip">Prompt 管理</div>
+      <div class="arch-chip">Guard Rail 驗證</div>
+      <div class="arch-chip">Human-in-the-Loop</div>
+    </div>
+  </div>
+
+  <div style="text-align: center; color: var(--text3); font-size: 18px; padding: 4px 0;">↕</div>
+
+  <div class="arch-layer" style="border-color: rgba(59,201,160,0.3); background: rgba(59,201,160,0.04);">
+    <div class="arch-layer-title" style="color: var(--teal);">⚡ AI 能力層</div>
+    <div class="arch-layer-items">
+      <div class="arch-chip">LLM（解析 / 生成）</div>
+      <div class="arch-chip">Embedding 模型</div>
+      <div class="arch-chip">RAG 搜尋引擎</div>
+      <div class="arch-chip">Tool Calling</div>
+      <div class="arch-chip">MCP 連接器</div>
+    </div>
+  </div>
+
+  <div style="text-align: center; color: var(--text3); font-size: 18px; padding: 4px 0;">↕</div>
+
+  <div class="arch-layer" style="border-color: rgba(165,124,244,0.3); background: rgba(165,124,244,0.04);">
+    <div class="arch-layer-title" style="color: var(--purple);">🗄️ Data 層（資料存儲）</div>
+    <div class="arch-layer-items">
+      <div class="arch-chip">歷史報價資料庫</div>
+      <div class="arch-chip">向量資料庫 (Qdrant)</div>
+      <div class="arch-chip">ERP 系統 API</div>
+      <div class="arch-chip">文件儲存</div>
+      <div class="arch-chip">Audit Log</div>
+    </div>
+  </div>
+
+  <h3 style="font-size: 16px; font-weight: 600; margin: 28px 0 16px;">🔄 報價流程完整走法</h3>
+
+  <div class="card">
+    <div style="display: flex; flex-direction: column; gap: 10px; font-size: 13px;">
+      <div style="display: flex; align-items: flex-start; gap: 12px; padding: 10px; background: var(--bg3); border-radius: 8px;">
+        <div style="background: var(--accent); color: #fff; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0;">1</div>
+        <div><strong style="color: var(--text);">業務上傳 Email / PDF</strong> → UI 層接收</div>
+      </div>
+      <div style="display: flex; align-items: flex-start; gap: 12px; padding: 10px; background: var(--bg3); border-radius: 8px;">
+        <div style="background: var(--gold); color: #000; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0;">2</div>
+        <div><strong style="color: var(--text);">Orchestrator 啟動 Agent</strong> → 呼叫 LLM 解析需求欄位</div>
+      </div>
+      <div style="display: flex; align-items: flex-start; gap: 12px; padding: 10px; background: var(--bg3); border-radius: 8px;">
+        <div style="background: var(--teal); color: #000; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0;">3</div>
+        <div><strong style="color: var(--text);">RAG 搜尋</strong> → 找 Top-3 相似歷史案例</div>
+      </div>
+      <div style="display: flex; align-items: flex-start; gap: 12px; padding: 10px; background: var(--bg3); border-radius: 8px;">
+        <div style="background: var(--purple); color: #fff; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0;">4</div>
+        <div><strong style="color: var(--text);">MCP Tool</strong> → 查詢 ERP 庫存、匯率</div>
+      </div>
+      <div style="display: flex; align-items: flex-start; gap: 12px; padding: 10px; background: var(--bg3); border-radius: 8px;">
+        <div style="background: var(--coral); color: #fff; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0;">5</div>
+        <div><strong style="color: var(--text);">規則引擎</strong> → 套公式計算報價金額（非 LLM）</div>
+      </div>
+      <div style="display: flex; align-items: flex-start; gap: 12px; padding: 10px; background: var(--bg3); border-radius: 8px;">
+        <div style="background: var(--accent); color: #fff; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0;">6</div>
+        <div><strong style="color: var(--text);">LLM 生成</strong> → 報價單文字說明</div>
+      </div>
+      <div style="display: flex; align-items: flex-start; gap: 12px; padding: 10px; background: rgba(59,201,160,0.08); border-radius: 8px; border: 1px solid rgba(59,201,160,0.2);">
+        <div style="background: var(--teal); color: #000; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0;">7</div>
+        <div><strong style="color: var(--teal);">業務審核</strong> → 確認後按送出，記錄進資料庫</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-nav-btn">
+    <button class="btn btn-ghost" onclick="goto('step5')">← Step 5</button>
+    <button class="btn" onclick="goto('step7')">Step 7：實作流程 →</button>
+  </div>
+</div>
+
+<!-- STEP 7 -->
+<div id="s-step7" class="section">
+  <div class="section-badge badge-main">🔥 主線 Step 7</div>
+  <h2 class="section-title">實作流程：Prompt-Driven Development</h2>
+  <p class="section-desc">現代 AI 系統開發，可以用 Prompt 驅動每個開發環節。學會這個流程，你就能讓 AI 幫你寫 AI 系統。</p>
+
+  <div class="case-tabs">
+    <button class="case-tab active" onclick="implTab(0)">① 寫 Spec</button>
+    <button class="case-tab" onclick="implTab(1)">② 生模組</button>
+    <button class="case-tab" onclick="implTab(2)">③ 生 API</button>
+    <button class="case-tab" onclick="implTab(3)">④ 生 Schema</button>
+    <button class="case-tab" onclick="implTab(4)">⑤ 生骨架</button>
+  </div>
+
+  <div id="impl-0" class="case-panel active card">
+    <div class="card-title">📄 Step ① 用 Prompt 寫 Spec</div>
+    <div class="prompt-box">你是一位資深系統分析師。
+請根據以下業務問題，生成一份完整的系統需求規格書（SRS），包含：
+1. 專案背景
+2. 使用者角色（Persona）
+3. User Stories（每條格式：身為X，我想要Y，以便Z）
+4. 功能需求（FR，每條可測試）
+5. 非功能需求（NFR）
+6. 系統邊界
+7. 驗收標準
+
+業務問題：{在此填入你的問題描述}</div>
+    <button class="btn" style="margin-top: 12px;" onclick="setPrompt('spec-gen')">在右側試試這個 Prompt →</button>
+  </div>
+
+  <div id="impl-1" class="case-panel card">
+    <div class="card-title">🧩 Step ② 用 Prompt 生模組設計</div>
+    <div class="prompt-box">根據以下 Spec 中的功能需求，設計模組清單：
+- 列出所有需要的模組（Module）
+- 每個模組的職責（Responsibility）
+- 模組之間的依賴關係
+- 建議的技術選型
+
+Spec 節錄：{FR-01 到 FR-05...}</div>
+    <p class="card-body" style="margin-top: 14px; font-size: 13px;">💡 生成後，你會得到一張模組地圖，之後每個模組可以獨立開發。</p>
+  </div>
+
+  <div id="impl-2" class="case-panel card">
+    <div class="card-title">🔌 Step ③ 用 Prompt 生 API 設計</div>
+    <div class="prompt-box">你是 API 設計專家。根據以下模組需求，設計 RESTful API：
+- 列出所有 endpoint
+- 每個 endpoint 的 Method、Path、Request Body、Response
+- 錯誤碼定義
+- 認證方式
+
+模組：Email 解析模組
+功能：接收 Email 原文，回傳結構化需求資料</div>
+    <p class="card-body" style="margin-top: 14px; font-size: 13px;">💡 有了 API 設計，前後端可以平行開發。</p>
+  </div>
+
+  <div id="impl-3" class="case-panel card">
+    <div class="card-title">🗄️ Step ④ 用 Prompt 生資料 Schema</div>
+    <div class="prompt-box">根據以下功能需求，設計資料庫 Schema（PostgreSQL）：
+- 定義所有 Table 結構
+- 欄位名稱、型別、約束
+- 索引建議
+- 外鍵關係
+
+需求：儲存報價單、歷史詢價、客戶資料</div>
+    <p class="card-body" style="margin-top: 14px; font-size: 13px;">💡 AI 會幫你生成 CREATE TABLE SQL，你只需要 review 並微調。</p>
+  </div>
+
+  <div id="impl-4" class="case-panel card">
+    <div class="card-title">🛠 Step ⑤ 用 Prompt 生程式骨架</div>
+    <div class="prompt-box">用 Python + FastAPI 生成以下模組的程式骨架：
+
+模組：EmailParserModule
+功能：
+1. 接收 email_text: str
+2. 呼叫 OpenAI API 提取結構化欄位
+3. 驗證必填欄位是否完整
+4. 回傳 QuoteRequest 物件
+
+請生成：
+- 資料模型（Pydantic）
+- Service 函式簽名（含型別標注）
+- 錯誤處理骨架
+- 測試案例骨架（pytest）</div>
+    <p class="card-body" style="margin-top: 14px; font-size: 13px;">💡 你不需要從零開始打，AI 給你骨架，你填入業務邏輯。</p>
+  </div>
+
+  <div class="highlight good">
+    <span>✅</span>
+    <span><strong>Prompt-Driven 開發的核心：</strong>每個步驟都有清晰的輸入（Spec / 需求）和輸出（程式碼 / 文件），AI 負責生成草稿，人負責 Review 和決策。</span>
+  </div>
+
+  <div class="section-nav-btn">
+    <button class="btn btn-ghost" onclick="goto('step6')">← Step 6</button>
+    <button class="btn" onclick="goto('sdd')">第三部分：SDD →</button>
+  </div>
+</div>
+
+<!-- SDD -->
+<div id="s-sdd" class="section">
+  <div class="section-badge badge-sw">📐 軟體工程觀念</div>
+  <h2 class="section-title">SDD：規格驅動開發</h2>
+  <p class="section-desc">Spec-Driven Development — 先寫規格，再寫系統。這是讓 AI 專案可控、可維護的基礎。</p>
+
+  <div class="card">
+    <div class="card-title">💬 為什麼 SDD 特別適合 AI 專案？</div>
+    <p class="card-body">
+    傳統軟體可以「先寫再改」，因為行為確定。但 LLM 的輸出是概率性的——沒有規格，你根本不知道 AI「做對了沒有」。<br><br>
+    <strong style="color: var(--text);">Spec 的三個功能：</strong><br>
+    ① <strong style="color: var(--accent);">溝通契約</strong>：讓 PM、工程師、業務對「做什麼」有共識<br>
+    ② <strong style="color: var(--teal);">Prompt 的起點</strong>：所有呼叫 LLM 的 Prompt 都應源自 Spec<br>
+    ③ <strong style="color: var(--gold);">測試的依據</strong>：驗收標準 就是測試案例的基礎
+    </p>
+  </div>
+
+  <h3 style="font-size: 16px; font-weight: 600; margin: 24px 0 16px;">🗺️ SDD 流程</h3>
+
+  <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px;">
+    <div style="display: flex; align-items: center; gap: 14px; padding: 14px 18px; background: var(--bg3); border-radius: 10px; border-left: 3px solid var(--accent);">
+      <div style="font-size: 20px;">📋</div>
+      <div>
+        <div style="font-size: 13px; font-weight: 600; color: var(--text);">1. 撰寫需求規格書（SRS）</div>
+        <div style="font-size: 12px; color: var(--text3);">用 Prompt 生成草稿 → 業務確認 → 工程師 Review</div>
+      </div>
+    </div>
+    <div style="text-align: center; color: var(--text3);">↓</div>
+    <div style="display: flex; align-items: center; gap: 14px; padding: 14px 18px; background: var(--bg3); border-radius: 10px; border-left: 3px solid var(--gold);">
+      <div style="font-size: 20px;">🧩</div>
+      <div>
+        <div style="font-size: 13px; font-weight: 600; color: var(--text);">2. 從 Spec 推導系統設計</div>
+        <div style="font-size: 12px; color: var(--text3);">模組設計 → API 設計 → 資料 Schema</div>
+      </div>
+    </div>
+    <div style="text-align: center; color: var(--text3);">↓</div>
+    <div style="display: flex; align-items: center; gap: 14px; padding: 14px 18px; background: var(--bg3); border-radius: 10px; border-left: 3px solid var(--teal);">
+      <div style="font-size: 20px;">💻</div>
+      <div>
+        <div style="font-size: 13px; font-weight: 600; color: var(--text);">3. Prompt 驅動實作</div>
+        <div style="font-size: 12px; color: var(--text3);">每個模組的 Prompt 都對應到 FR 編號</div>
+      </div>
+    </div>
+    <div style="text-align: center; color: var(--text3);">↓</div>
+    <div style="display: flex; align-items: center; gap: 14px; padding: 14px 18px; background: var(--bg3); border-radius: 10px; border-left: 3px solid var(--coral);">
+      <div style="font-size: 20px;">✅</div>
+      <div>
+        <div style="font-size: 13px; font-weight: 600; color: var(--text);">4. 按 AC 驗收</div>
+        <div style="font-size: 12px; color: var(--text3);">每條驗收標準都有對應的測試案例</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="highlight info">
+    <span>📌</span>
+    <span><strong>報價助理對應：</strong>「AC-01: 解析準確率 &gt; 90%」→ 生成 100 個測試 Email，自動跑解析，統計準確率。Spec 和測試直接連動。</span>
+  </div>
+
+  <div class="section-nav-btn">
+    <button class="btn btn-ghost" onclick="goto('step7')">← Step 7</button>
+    <button class="btn" onclick="goto('tdd')">TDD →</button>
+  </div>
+</div>
+
+<!-- TDD -->
+<div id="s-tdd" class="section">
+  <div class="section-badge badge-sw">🧪 軟體工程觀念</div>
+  <h2 class="section-title">TDD：測試驅動開發</h2>
+  <p class="section-desc">Test-Driven Development — 先寫測試，再寫程式。這讓你在寫 AI 功能之前，就想清楚「正確」是什麼。</p>
+
+  <div class="card">
+    <div class="card-title">💡 TDD 的三個步驟（Red → Green → Refactor）</div>
+    <div style="display: flex; gap: 12px; margin-top: 14px;">
+      <div style="flex: 1; text-align: center; padding: 16px; background: rgba(240,96,96,0.08); border-radius: 10px; border: 1px solid rgba(240,96,96,0.2);">
+        <div style="font-size: 24px; margin-bottom: 8px;">🔴</div>
+        <div style="font-size: 13px; font-weight: 700; color: var(--coral); margin-bottom: 6px;">Red</div>
+        <div style="font-size: 12px; color: var(--text2);">先寫測試<br>測試失敗（因為還沒有程式）</div>
+      </div>
+      <div style="display: flex; align-items: center; color: var(--text3);">→</div>
+      <div style="flex: 1; text-align: center; padding: 16px; background: rgba(59,201,160,0.08); border-radius: 10px; border: 1px solid rgba(59,201,160,0.2);">
+        <div style="font-size: 24px; margin-bottom: 8px;">🟢</div>
+        <div style="font-size: 13px; font-weight: 700; color: var(--teal); margin-bottom: 6px;">Green</div>
+        <div style="font-size: 12px; color: var(--text2);">寫最少的程式<br>讓測試通過</div>
+      </div>
+      <div style="display: flex; align-items: center; color: var(--text3);">→</div>
+      <div style="flex: 1; text-align: center; padding: 16px; background: rgba(91,141,239,0.08); border-radius: 10px; border: 1px solid rgba(91,141,239,0.2);">
+        <div style="font-size: 24px; margin-bottom: 8px;">🔵</div>
+        <div style="font-size: 13px; font-weight: 700; color: var(--accent); margin-bottom: 6px;">Refactor</div>
+        <div style="font-size: 12px; color: var(--text2);">優化程式碼<br>測試要持續通過</div>
+      </div>
+    </div>
+  </div>
+
+  <h3 style="font-size: 16px; font-weight: 600; margin: 24px 0 16px;">🏭 報價助理的 TDD 範例</h3>
+
+  <div class="card" style="margin-bottom: 16px;">
+    <div class="card-title">🔴 測試一：缺漏欄位偵測</div>
+    <div class="prompt-box"># test_email_parser.py
+def test_missing_product_code_raises_error():
+    """當 Email 中缺少產品型號時，應拋出 ValidationError"""
+    email_text = "客戶要 100 條線，交期 2 週"  # 缺少型號
+    
+    with pytest.raises(ValidationError) as exc:
+        parse_quote_email(email_text)
+    
+    assert "product_code" in str(exc.value)
+    assert "缺漏欄位" in str(exc.value)</div>
+  </div>
+
+  <div class="card" style="margin-bottom: 16px;">
+    <div class="card-title">🔴 測試二：相似案例搜尋</div>
+    <div class="prompt-box"># test_rag_search.py
+def test_similar_case_found():
+    """當輸入 18AWG UL 線材，應找到相似歷史案例"""
+    query = QuoteRequest(
+        product_type="wire",
+        spec="18AWG",
+        certification="UL"
+    )
+    
+    results = search_similar_cases(query, top_k=3)
+    
+    assert len(results) >= 1
+    assert results[0].similarity_score > 0.8
+    assert "18AWG" in results[0].description</div>
+  </div>
+
+  <div class="highlight info">
+    <span>💡</span>
+    <span><strong>AI 專案 TDD 的挑戰：</strong>LLM 輸出是非確定性的，所以測試要關注「結構」和「約束」，而非「完全一致的字串」。例如：驗證回應是否包含必要欄位，而非逐字比對。</span>
+  </div>
+
+  <div class="task-block">
+    <div class="task-header">
+      <div class="task-icon">🎯</div>
+      <div class="task-title">任務：用 Prompt 生成測試案例</div>
+    </div>
+    <p style="font-size: 14px; color: var(--text2); margin-bottom: 14px;">把你的 FR 欄位輸入右側，讓 AI 自動生成對應的 pytest 測試案例。</p>
+    <button class="btn" onclick="setPrompt('tdd-gen')">載入 TDD 生成 Prompt →</button>
+  </div>
+
+  <div class="section-nav-btn">
+    <button class="btn btn-ghost" onclick="goto('sdd')">← SDD</button>
+    <button class="btn" onclick="goto('bdd')">BDD →</button>
+  </div>
+</div>
+
+<!-- BDD -->
+<div id="s-bdd" class="section">
+  <div class="section-badge badge-sw">🎭 軟體工程觀念</div>
+  <h2 class="section-title">BDD：行為驅動開發</h2>
+  <p class="section-desc">Behavior-Driven Development — 用自然語言描述系統行為，讓業務和工程師說同一種話。</p>
+
+  <div class="card">
+    <div class="card-title">💡 BDD vs TDD 的差異</div>
+    <table class="edu-table" style="margin: 10px 0 0;">
+      <tr>
+        <th></th>
+        <th>TDD</th>
+        <th>BDD</th>
+      </tr>
+      <tr>
+        <td>寫給誰看</td>
+        <td>工程師</td>
+        <td>業務 + 工程師都能看懂</td>
+      </tr>
+      <tr>
+        <td>語言</td>
+        <td>程式碼（pytest）</td>
+        <td>自然語言（Gherkin）</td>
+      </tr>
+      <tr>
+        <td>關注點</td>
+        <td>函式的輸入輸出</td>
+        <td>使用者的行為情境</td>
+      </tr>
+      <tr>
+        <td>起點</td>
+        <td>FR（功能需求）</td>
+        <td>User Story</td>
+      </tr>
+    </table>
+  </div>
+
+  <h3 style="font-size: 16px; font-weight: 600; margin: 24px 0 16px;">📝 Gherkin 語法（報價助理範例）</h3>
+
+  <div class="gherkin">
+    <div class="g-keyword">Feature:</div> <span class="g-text">Email 詢價解析</span><br>
+    <div style="padding-left: 16px; margin-top: 8px;">
+      <div class="g-scenario">Scenario:</div> <span class="g-text">不完整詢價應提示缺漏欄位</span><br>
+      <div style="padding-left: 16px;">
+        <span class="g-keyword">Given</span> <span class="g-text">客戶輸入了一封只有數量的詢價 Email</span><br>
+        <span class="g-keyword">When</span> <span class="g-text">系統分析這封 Email</span><br>
+        <span class="g-keyword">Then</span> <span class="g-text">系統應回傳「缺少產品型號」的提示</span><br>
+        <span class="g-keyword">And</span> <span class="g-text">提示文字應以繁體中文呈現</span>
+      </div>
+    </div>
+    <br>
+    <div style="padding-left: 16px;">
+      <div class="g-scenario">Scenario:</div> <span class="g-text">完整詢價應生成報價初稿</span><br>
+      <div style="padding-left: 16px;">
+        <span class="g-keyword">Given</span> <span class="g-text">客戶提供了完整規格（型號、數量、交期、認證）</span><br>
+        <span class="g-keyword">When</span> <span class="g-text">系統處理這封詢價</span><br>
+        <span class="g-keyword">Then</span> <span class="g-text">系統應生成包含單價與總價的報價初稿</span><br>
+        <span class="g-keyword">And</span> <span class="g-text">業務應能在介面上看到並編輯這份初稿</span>
+      </div>
+    </div>
+    <br>
+    <div style="padding-left: 16px;">
+      <div class="g-scenario">Scenario:</div> <span class="g-text">金額超過授權上限需主管審核</span><br>
+      <div style="padding-left: 16px;">
+        <span class="g-keyword">Given</span> <span class="g-text">報價金額超過 NT$ 500,000</span><br>
+        <span class="g-keyword">When</span> <span class="g-text">業務準備送出報價</span><br>
+        <span class="g-keyword">Then</span> <span class="g-text">系統應自動發送審核通知給業務主管</span><br>
+        <span class="g-keyword">And</span> <span class="g-text">報價單狀態變更為「待審核」</span>
+      </div>
+    </div>
+  </div>
+
+  <h3 style="font-size: 16px; font-weight: 600; margin: 24px 0 16px;">🔗 BDD 在 AI 專案的價值</h3>
+
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+    <div class="card">
+      <div class="card-title" style="font-size: 13px;">📢 業務語言 ↔ 技術規格</div>
+      <p class="card-body" style="font-size: 13px;">Gherkin 讓業務和工程師能確認「做的是不是同一件事」，避免做完才發現方向錯誤。</p>
+    </div>
+    <div class="card">
+      <div class="card-title" style="font-size: 13px;">🤖 Prompt 的驗收框架</div>
+      <p class="card-body" style="font-size: 13px;">每個 Scenario 都是一個 LLM 功能的驗收情境，可以自動化測試 AI 的行為。</p>
+    </div>
+  </div>
+
+  <div class="task-block">
+    <div class="task-header">
+      <div class="task-icon">🎯</div>
+      <div class="task-title">最終任務：用 Prompt 生成 BDD 情境</div>
+    </div>
+    <p style="font-size: 14px; color: var(--text2); margin-bottom: 14px;">把你的 User Story 輸入右側，讓 AI 生成對應的 Gherkin 情境描述。</p>
+    <button class="btn" onclick="setPrompt('bdd-gen')">載入 BDD 生成 Prompt →</button>
+  </div>
+
+  <div class="highlight good" style="margin-top: 24px;">
+    <span>🎉</span>
+    <span><strong>課程完成！</strong>你已學會：問題分析 → 設計思考 → Spec 撰寫 → 技術選型 → 架構設計 → Prompt 實作 → SDD / TDD / BDD。這就是 AI 系統落地的完整流程。</span>
+  </div>
+
+  <div class="section-nav-btn">
+    <button class="btn btn-ghost" onclick="goto('tdd')">← TDD</button>
+    <button class="btn" onclick="goto('home')">回到課程總覽 🏠</button>
+  </div>
+</div>
+
+</main>
+
+<!-- RIGHT PANEL -->
+<aside id="panel">
+  <div id="panel-header">
+    <div class="panel-dot"></div>
+    <h3>AI 協作區</h3>
+  </div>
+
+  <div class="prompt-section">
+    <div class="prompt-label">Prompt 範例</div>
+    <div id="prompt-display" class="prompt-box">← 從左側選擇章節<br>或點選任務按鈕<br>載入 Prompt 範例</div>
+
+    <div class="prompt-label">輸入你的案例</div>
+    <textarea class="prompt-input" id="user-input" placeholder="在這裡描述你的問題或案例..."></textarea>
+
+    <div style="display: flex; gap: 8px;">
+      <button class="btn" onclick="runPrompt()" style="flex: 1;">生成輸出 ↗</button>
+      <button class="btn btn-ghost" onclick="clearOutput()">清除</button>
+    </div>
+
+    <div class="prompt-label" id="output-label" style="display:none;">AI 輸出（模擬）</div>
+    <div id="output-box" class="output-box"></div>
+
+    <hr style="border-color: var(--border); margin: 4px 0;">
+
+    <div class="prompt-label">快速 Prompt</div>
+    <div style="display: flex; flex-direction: column; gap: 6px;">
+      <button class="btn btn-ghost" style="font-size: 12px; text-align: left; padding: 8px 12px;" onclick="setPrompt('spec-gen')">📄 生成需求規格書</button>
+      <button class="btn btn-ghost" style="font-size: 12px; text-align: left; padding: 8px 12px;" onclick="setPrompt('5q-analysis')">⚙️ 5 問技術選型分析</button>
+      <button class="btn btn-ghost" style="font-size: 12px; text-align: left; padding: 8px 12px;" onclick="setPrompt('tdd-gen')">🧪 生成測試案例</button>
+      <button class="btn btn-ghost" style="font-size: 12px; text-align: left; padding: 8px 12px;" onclick="setPrompt('bdd-gen')">🎭 生成 BDD 情境</button>
+    </div>
+  </div>
+</aside>
+
+<script>
+const sections = ['home','case1','case2','case3','step1','step2','step3','step4','step5','step6','step7','sdd','tdd','bdd'];
+let visited = new Set(['home']);
+
+function goto(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('s-' + id).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if (n.getAttribute('onclick') && n.getAttribute('onclick').includes("'" + id + "'")) {
+      n.classList.add('active');
+    }
+  });
+  visited.add(id);
+  updateProgress();
+  window.scrollTo(0, 0);
+}
+
+function updateProgress() {
+  const total = sections.length;
+  const done = visited.size;
+  document.getElementById('prog-label').textContent = `進度 ${done} / ${total}`;
+  document.getElementById('prog-fill').style.width = Math.round(done / total * 100) + '%';
+}
+
+// QUIZ 1
+function quiz1(ans) {
+  const btns = document.querySelectorAll('#s-case1 .quiz-opt');
+  btns.forEach(b => b.disabled = true);
+  const fb = document.getElementById('q1-feedback');
+  if (ans === 'b') {
+    btns[1].classList.add('correct');
+    fb.className = 'quiz-feedback show ok';
+    fb.innerHTML = '✅ 正確！<strong>套用公式計算金額</strong>絕對不能讓 LLM 直接決定。LLM 有幻覺問題，可能算出錯誤的數字，造成公司損失。精確計算必須使用程式碼邏輯（如 Python 計算、ERP 系統）。';
+  } else {
+    btns[['a','b','c','d'].indexOf(ans)].classList.add('wrong');
+    btns[1].classList.add('correct');
+    fb.className = 'quiz-feedback show bad';
+    fb.innerHTML = '❌ 不對。正確答案是 <strong>B. 套用公式計算最終報價金額</strong>。LLM 擅長語言理解與生成，但涉及精確數字計算時容易出錯（幻覺問題），金額計算必須用程式邏輯。';
+  }
+}
+
+// QUIZ 2
+function quiz2(ans) {
+  const btns = document.querySelectorAll('#s-step2 .quiz-opt');
+  btns.forEach(b => b.disabled = true);
+  const fb = document.getElementById('q2-feedback');
+  if (ans === 'b') {
+    btns[1].classList.add('correct');
+    fb.className = 'quiz-feedback show ok';
+    fb.innerHTML = '✅ 正確！這個問題的本質是「大量非結構化資料的語意搜尋」。先建立歷史報價資料庫，再用 RAG 做語意搜尋，是最正確的解法。LLM 沒有外部記憶，它無法「記住」你的歷史資料。';
+  } else {
+    btns[['a','b','c','d'].indexOf(ans)].classList.add('wrong');
+    btns[1].classList.add('correct');
+    fb.className = 'quiz-feedback show bad';
+    fb.innerHTML = '❌ 不對。正確答案是 <strong>B</strong>。LLM 本身沒有記憶，無法存取你的歷史資料。必須先建資料庫，再用 RAG 讓 LLM 搜尋並理解。';
+  }
+}
+
+// QUIZ 3
+function quiz3(ans) {
+  const btns = document.querySelectorAll('#s-case3 .quiz-opt');
+  btns.forEach(b => b.disabled = true);
+  const fb = document.getElementById('q3-feedback');
+  if (ans === 'a') {
+    btns[0].classList.add('correct');
+    fb.className = 'quiz-feedback show ok';
+    fb.innerHTML = '✅ A 是 <strong>AI 能力問題</strong>（LLM 的評分一致性是技術限制），可以用：固定評分 Rubric 注入 Prompt、加入 Guardrail 驗證、人工抽樣校正。<br><br>B 是 <strong>流程設計問題</strong>（人沒有審核），要靠流程規範解決，跟 AI 無關。';
+  } else {
+    btns[1].classList.add('correct');
+    btns[0].classList.add('correct');
+    fb.className = 'quiz-feedback show ok';
+    fb.innerHTML = '✅ A 是 <strong>AI 能力問題</strong>，B 是 <strong>流程設計問題</strong>。兩個都選對了！記住：分清楚問題的根本原因，才能設計對的解法。';
+  }
+}
+
+// Design Thinking stepper
+function dtGo(idx) {
+  for (let i = 0; i < 5; i++) {
+    document.getElementById('dt-' + i).classList.remove('active');
+  }
+  document.getElementById('dt-' + idx).classList.add('active');
+  document.querySelectorAll('#dt-dots .stepper-dot').forEach((d, i) => {
+    d.classList.toggle('active', i === idx);
+  });
+}
+
+// Impl tabs
+function implTab(idx) {
+  document.querySelectorAll('#s-step7 .case-panel').forEach((p, i) => {
+    p.classList.toggle('active', i === idx);
+  });
+  document.querySelectorAll('#s-step7 .case-tab').forEach((t, i) => {
+    t.classList.toggle('active', i === idx);
+  });
+}
+
+// Prompts
+const prompts = {
+  'spec-gen': `你是一位資深系統分析師。
+請根據以下業務問題，生成一份完整的系統需求規格書（SRS），包含：
+
+1. 專案背景（2-3句話）
+2. 使用者角色（Persona × 2）
+3. User Stories（格式：身為X，我想要Y，以便Z）× 5條
+4. 功能需求（FR）× 5條，每條可獨立測試
+5. 非功能需求（NFR）× 3條
+6. 系統邊界（不做什麼）× 3條
+7. 驗收標準 × 3條，包含量化指標
+
+業務問題：{在下方輸入框描述你的問題}`,
+
+  '5q-analysis': `請用「AI 系統選型 5 問框架」分析以下案例，並給出技術選型建議：
+
+問題一：要知識嗎？（需要搜尋文件/歷史資料嗎？）→ 是否需要 RAG
+問題二：要行動嗎？（需要呼叫外部 API/系統嗎？）→ 是否需要 MCP/Tool
+問題三：要流程嗎？（需要多步驟自動化嗎？）→ 是否需要 Agent
+問題四：要穩定嗎？（結果必須精確、可驗證嗎？）→ 是否需要 Guardrail
+問題五：要記住嗎？（需要跨對話保持狀態嗎？）→ 是否需要 Memory
+
+案例：{在下方輸入框描述你的案例}`,
+
+  'tdd-gen': `你是一位 AI 系統測試工程師。
+請根據以下功能需求（FR），生成對應的 pytest 測試案例：
+
+要求：
+- 每個 FR 至少 2 個測試案例（正常情境 + 邊界/錯誤情境）
+- 測試 LLM 輸出時，驗證「結構正確性」，不要逐字比對
+- 使用 pytest 語法，包含 docstring 說明
+- 加入 assert 時，提供清楚的失敗訊息
+
+功能需求：{在下方輸入框貼入 FR 內容}`,
+
+  'bdd-gen': `你是一位 BDD 專家。請根據以下 User Story，用 Gherkin 語法生成行為情境：
+
+格式要求：
+Feature: [功能名稱]
+  Scenario: [情境名稱]
+    Given [前置條件]
+    When [觸發動作]
+    Then [預期結果]
+    And [補充條件] (可選)
+
+要求：
+- 每個 User Story 生成 3 個情境（正常 / 異常 / 邊界）
+- 語言使用繁體中文
+- 情境描述要業務可理解（無技術術語）
+
+User Story：{在下方輸入框貼入你的 User Story}`,
+
+  'case2-mvp': `你是一位產品策略顧問。
+針對「AI 設計師助手」系統，如果只能做一個功能作為 MVP，請分析：
+
+1. 各功能的「使用者價值」（1-5分）
+2. 各功能的「技術難度」（1-5分）
+3. 各功能的「驗收難易度」（1-5分）
+4. 推薦的 MVP 功能，並說明理由
+5. MVP 的成功標準（2週後如何判斷成功？）
+
+功能選項：
+A. 需求釐清對話（LLM引導客戶說清楚）
+B. 設計參考搜尋（RAG搜尋設計庫）
+C. 線框稿描述生成
+D. 版本記錄系統`,
+};
+
+const outputs = {
+  'spec-gen': `📄 系統需求規格書（SRS）- 智慧工廠報價助理
+
+━━━━━━━━━━━━━━━━━━━━━
+
+1. 專案背景
+某線材製造公司每日處理 20+ 封詢價 Email，平均回覆時間 3 天，報價錯誤率約 15%。透過 AI 系統自動化關鍵環節，目標將回覆時間縮短至 30 分鐘，錯誤率降至 2% 以下。
+
+2. 使用者角色
+👤 業務小王：資深業務，每天處理大量詢價，不擅長技術操作，最在乎速度與正確率。
+👤 業務主管陳經理：負責大金額報價審核，需要系統提供清楚的審核介面。
+
+3. User Stories（共 5 條）
+• 身為業務，我想要系統自動提取 Email 中的規格，以便不用手動整理資料
+• 身為業務，我想要查詢相似歷史報價，以便參考定價
+• 身為業務，我想要系統幫我查詢即時庫存，以便確認可交期
+• 身為業務，我想要一鍵生成報價單草稿，以便快速審核後送出
+• 身為主管，我想要收到大金額報價審核通知，以便把關重要交易
+
+4. 功能需求（FR）
+FR-01: 系統應能從 Email/PDF 提取：客戶名稱、產品型號、數量、交期、認證需求
+FR-02: 系統應能搜尋歷史報價庫，返回相似度 > 0.8 的 Top-3 案例
+FR-03: 系統應透過 ERP API 查詢即時庫存與匯率
+FR-04: 系統應使用公式計算報價初稿（非 LLM 直接計算）
+FR-05: 當報價金額 > NT$500,000 時，自動發送主管審核通知
+
+5. 驗收標準
+AC-01: Email 解析準確率 > 90%（抽樣 100 封人工核對）
+AC-02: 業務完成一份報價的時間 < 30 分鐘
+AC-03: 報價金額錯誤率 < 2%（上線後首月統計）`,
+
+  '5q-analysis': `⚙️ AI 系統選型分析結果
+
+━━━━━━━━━━━━━━━━━━━━━
+
+根據您的案例，5 問分析如下：
+
+❓ 問題一：要知識嗎？
+✅ 是 → 需要 RAG
+建議：建立向量資料庫儲存歷史資料，使用 Embedding 模型做語意搜尋
+
+❓ 問題二：要行動嗎？
+✅ 是 → 需要 MCP / Tool Calling
+建議：設計 Tool 函式連接外部 API（ERP、庫存系統），讓 LLM 可以呼叫
+
+❓ 問題三：要流程嗎？
+✅ 是 → 需要 Agent / Workflow
+建議：使用 LangGraph 或 LangChain 設計多步驟 Agent，每步驟有明確輸入輸出
+
+❓ 問題四：要穩定嗎？
+✅ 必須 → 需要 Guardrail
+建議：數字計算不走 LLM，設計輸出驗證層，金額超過門檻需人工確認
+
+❓ 問題五：要記住嗎？
+⚡ 視情況 → MVP 先跳過
+建議：第一版先用 Session 存當前對話，後期再考慮跨對話的 Memory
+
+📦 技術棧建議：
+• LLM: GPT-4o / Claude Sonnet
+• RAG: Qdrant + OpenAI Embeddings
+• Agent: LangGraph
+• 後端: FastAPI + PostgreSQL
+• 部署: Docker + Nginx`,
+
+  'tdd-gen': `🧪 自動生成的 Pytest 測試案例
+
+━━━━━━━━━━━━━━━━━━━━━
+
+# test_email_parser.py
+
+def test_complete_email_parsed_successfully():
+    """FR-01: 完整 Email 應成功提取所有欄位"""
+    email = "客戶：ABC Corp，要 500 條 18AWG UL 認證線，交期 2025/3/1"
+    result = parse_quote_email(email)
+    
+    assert result.customer_name == "ABC Corp"
+    assert result.quantity == 500
+    assert "UL" in result.certifications
+    assert result.delivery_date is not None
+
+def test_missing_product_code_raises_error():
+    """FR-01: 缺少型號應拋出 ValidationError"""
+    email = "要 100 條線，交期下個月"
+    with pytest.raises(ValidationError) as exc:
+        parse_quote_email(email)
+    assert "product_code" in str(exc.value).lower()
+
+def test_similar_cases_returned():
+    """FR-02: 應返回至少 1 個相似案例"""
+    query = QuoteRequest(spec="18AWG", cert="UL", qty=500)
+    results = search_similar_cases(query, top_k=3)
+    
+    assert len(results) >= 1
+    assert all(r.similarity > 0.7 for r in results)
+
+def test_large_amount_triggers_approval():
+    """FR-05: 金額超過 500,000 應觸發審核通知"""
+    quote = QuoteResult(total_amount=750000)
+    status = process_approval(quote)
+    
+    assert status == "PENDING_APPROVAL"
+    assert notification_sent_to_manager()`,
+
+  'bdd-gen': `🎭 Gherkin BDD 情境
+
+━━━━━━━━━━━━━━━━━━━━━
+
+Feature: AI 報價助理 - 詢價處理
+
+  Scenario: 完整詢價成功生成報價初稿
+    Given 客戶提供了完整的詢價資訊
+      | 欄位     | 值              |
+      | 產品型號 | 18AWG-UL-500V   |
+      | 數量     | 1000 條         |
+      | 交期     | 2025年3月1日    |
+    When 業務上傳這封詢價 Email
+    Then 系統應在 10 秒內完成解析
+    And 業務界面應顯示結構化的需求摘要
+    And 系統應提供 3 個歷史相似案例供參考
+
+  Scenario: 不完整詢價應提示缺漏欄位
+    Given 客戶只說「要 100 條線，越快越好」
+    When 系統分析這封 Email
+    Then 系統應顯示「缺漏欄位」提示
+    And 提示應明確列出：產品型號、認證需求
+    And 系統應提供填寫引導表單
+
+  Scenario: 大金額報價自動送審
+    Given 系統計算出報價金額為 NT$750,000
+    When 業務點擊「確認報價」
+    Then 系統不應立即送出報價
+    And 應自動發送審核通知給業務主管
+    And 報價狀態應變更為「待主管審核」
+    And 業務應看到「等待審核中」的狀態提示`,
+
+  'case2-mvp': `📊 AI 設計師助手 MVP 功能分析
+
+━━━━━━━━━━━━━━━━━━━━━
+
+功能評分矩陣：
+
+功能 A - 需求釐清對話
+• 使用者價值：5/5（直擊核心痛點）
+• 技術難度：3/5（LLM 對話流）
+• 驗收難易度：4/5（可量化溝通效率）
+
+功能 B - 設計參考搜尋
+• 使用者價值：4/5
+• 技術難度：4/5（需建 RAG 系統）
+• 驗收難易度：3/5（主觀判斷多）
+
+功能 C - 線框稿描述生成
+• 使用者價值：3/5
+• 技術難度：3/5
+• 驗收難易度：2/5（難以量化品質）
+
+功能 D - 版本記錄系統
+• 使用者價值：3/5
+• 技術難度：2/5（純資料庫）
+• 驗收難易度：5/5（明確可測試）
+
+🎯 推薦 MVP：功能 A（需求釐清對話）
+
+理由：解決最核心的「需求模糊」問題，技術可行，且可在 2 週內觀察到明顯效果。
+
+成功標準（2週後）：
+✓ 需求確認輪次從平均 5 次降至 2 次
+✓ 設計師滿意度問卷 > 7/10
+✓ 需求文件完整度 > 85%`
+};
+
+function setPrompt(key) {
+  const p = prompts[key] || '← 請選擇一個 Prompt 範例';
+  document.getElementById('prompt-display').textContent = p;
+  document.getElementById('output-box').style.display = 'none';
+  document.getElementById('output-label').style.display = 'none';
+}
+
+function clearOutput() {
+  document.getElementById('output-box').style.display = 'none';
+  document.getElementById('output-label').style.display = 'none';
+  document.getElementById('user-input').value = '';
+}
+
+function runPrompt() {
+  const outBox = document.getElementById('output-box');
+  const outLabel = document.getElementById('output-label');
+  const promptText = document.getElementById('prompt-display').textContent;
+  
+  outLabel.style.display = 'block';
+  outBox.style.display = 'block';
+  
+  // Find which prompt is active
+  let outputKey = null;
+  for (const [k, v] of Object.entries(prompts)) {
+    if (promptText === v) { outputKey = k; break; }
+  }
+  
+  if (!outputKey) {
+    typeText(outBox, '📝 請先從左側章節或快速 Prompt 載入一個 Prompt 範例，再點擊「生成輸出」。');
+    return;
+  }
+  
+  const text = outputs[outputKey] || '輸出生成中...';
+  typeText(outBox, text);
+}
+
+function typeText(el, text) {
+  el.innerHTML = '';
+  let i = 0;
+  const cursor = document.createElement('span');
+  cursor.className = 'typing-cursor';
+  el.appendChild(cursor);
+  
+  const speed = Math.max(8, Math.min(20, 4000 / text.length));
+  
+  const interval = setInterval(() => {
+    if (i < text.length) {
+      cursor.before(document.createTextNode(text[i]));
+      i++;
+    } else {
+      clearInterval(interval);
+      cursor.remove();
+    }
+  }, speed);
+}
+</script>
+</body>
+</html>
